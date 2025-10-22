@@ -59,7 +59,7 @@
         <a-assets>
             <a-asset-item id="bananamilk" src="./bananamilk.glb"></a-asset-item>
         </a-assets>
-       <a-marker-camera type='pattern' url='pattern-BananaWords.patt'>
+        <a-marker type="pattern" url="./pattern-CustomPattern.patt">
             <a-entity
                 id="orientation-fixer"
                 position="0 0 0"
@@ -76,7 +76,9 @@
                 </a-gltf-model>
             </a-entity>
             </a-entity>
-        </a-marker-camera>
+        </a-marker>
+        <a-marker id="target-marker" type="pattern" url="./pattern-CustomPattern02.patt">
+        </a-marker>
         <a-entity camera></a-entity>
     </a-scene>
 </body>
