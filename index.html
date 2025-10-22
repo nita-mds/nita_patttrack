@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AR Model Looking at Second Marker</title>
+    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    
+    <script>
+      AFRAME.registerComponent('dynamic-look', {
+        schema: {
+          target: { type: 'selector' },
+          initialY: { type: 'number', default: 0 },
+          followSpeed: { type: 'number', default: 0.08 }, // How fast it follows the target
+          resetSpeed: { type: 'number', default: 0.05 }  // How fast it resets
+        },
+        init: function() {
+          this.targetWorldPosition = new THREE.Vector3();
+          this.selfWorldPosition = new THREE.Vector3();
+        },
+        tick: function() {
+          const targetEntity = this.data.target;
+          const currentRotation = this.el.getAttribute('rotation');
+          let targetY = this.data.initialY; // Default target is the initial direction
+          let speed = this.data.resetSpeed;   // Default speed is the reset speed
+
+          // If the target is visible, update the target angle and speed
+          if (targetEntity && targetEntity.object3D.visible) {
+            targetEntity.object3D.getWorldPosition(this.targetWorldPosition);
+            this.el.object3D.getWorldPosition(this.selfWorldPosition);
+            
+            const angleRad = Math.atan2(
+              this.targetWorldPosition.x - this.selfWorldPosition.x,
+              this.targetWorldPosition.z - this.selfWorldPosition.z
+            );
+            
+            targetY = THREE.MathUtils.radToDeg(angleRad); // New target is the marker
+            speed = this.data.followSpeed;                 // Use the faster follow speed
+          }
+
+          // Stop updating if we're already close to the target angle
+          if (Math.abs(currentRotation.y - targetY) < 0.5) return;
+
+          // --- UNIVERSAL SMOOTHING LOGIC ---
+          // Calculate the shortest angle difference to avoid spinning the long way around
+          let diff = targetY - currentRotation.y;
+          if (diff > 180) { diff -= 360; }
+          if (diff < -180) { diff += 360; }
+
+          // Apply the smoothed rotation
+          const newY = currentRotation.y + diff * speed;
+          this.el.setAttribute('rotation', { x: currentRotation.x, y: newY, z: currentRotation.z });
+        }
+      });
+    </script>
+    
+</head>
+<body>
+    <a-scene embedded arjs>
+        <a-assets>
+            <a-asset-item id="bananamilk" src="./bananamilk.glb"></a-asset-item>
+        </a-assets>
+        <a-marker type="pattern" url="./pattern-banana1.patt">
+            <a-entity
+                id="orientation-fixer"
+                position="0 0 0"
+                rotation="-90 0 0">
+            <a-entity
+                id="yaw-rotator"
+                dynamic-look="target: #kanji-marker; initialY: 180; followSpeed: 0.08; resetSpeed: 0.05;">
+                <a-gltf-model
+                    src="#bananamilk"
+                    position="0 0.2 0"
+                    scale="0.3 0.3 0.3"
+                    rotation="0 0 0"
+                    >
+                </a-gltf-model>
+            </a-entity>
+            </a-entity>
+        </a-marker>
+        <a-marker id="target-marker" type="pattern" url="./pattern-banana2.patt">
+        </a-marker>
+        <a-entity camera></a-entity>
+    </a-scene>
+</body>
+</html>
